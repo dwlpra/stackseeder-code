@@ -49,6 +49,7 @@ func zipFolder(folderPath, zipFilePath string) error {
 		filePath := filepath.Join(folderPath, file.Name())
 
 		// buka file yang ingin di zip
+		fmt.Println("membuka file: ", filePath)
 		file, err := os.Open(filePath)
 		if err != nil {
 			return fmt.Errorf("failed to open file: %w", err)
@@ -56,16 +57,19 @@ func zipFolder(folderPath, zipFilePath string) error {
 		defer file.Close()
 
 		// Buat file baru di zip archive
+		fmt.Println("menambahkan file ke zip: ", file.Name())
 		writer, err := zipWriter.Create(file.Name())
 		if err != nil {
 			return fmt.Errorf("failed to create entry in zip file: %w", err)
 		}
 
 		// copy isi file ke zip archive
+		fmt.Println("menyalin isi file ke zip: ", file.Name())
 		if _, err := io.Copy(writer, file); err != nil {
 			return fmt.Errorf("failed to copy file content to zip: %w", err)
 		}
 	}
 
+	fmt.Println("zip file berhasil dibuat: ", zipFilePath)
 	return nil
 }
