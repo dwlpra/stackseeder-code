@@ -69,26 +69,3 @@ func zipFolder(folderPath, zipFilePath string) error {
 
 	return nil
 }
-
-// addFileToZip adds a file to the provided zip.Writer
-func addFileToZip(zipWriter *zip.Writer, filePath, fileName string) error {
-	// Open the file
-	file, err := os.Open(filePath)
-	if err != nil {
-		return fmt.Errorf("failed to open file: %w", err)
-	}
-	defer file.Close()
-
-	// Create a new file in the zip archive
-	writer, err := zipWriter.Create(fileName)
-	if err != nil {
-		return fmt.Errorf("failed to create entry in zip file: %w", err)
-	}
-
-	// Copy the file content to the zip archive
-	if _, err := io.Copy(writer, file); err != nil {
-		return fmt.Errorf("failed to copy file content to zip: %w", err)
-	}
-
-	return nil
-}
