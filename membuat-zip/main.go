@@ -2,55 +2,93 @@ package main
 
 import (
 	"archive/zip"
+	"fmt"
 	"io"
 	"os"
-	"path"
+	"path/filepath"
 )
 
 func main() {
-
+	// path folder yang ingin di archive zip
 	folderPath := "./files"
-	zipFilePath := path.Join("./zipped/files.zip")
+	// path folder dan nama file hasil archive zip
+	zipFilePath := "./zipped/files.zip"
 
-	err := zipFolder(folderPath, zipFilePath)
-	if err != nil {
-		panic(err)
+	// memanggil fungsi zipFolder
+	if err := zipFolder(folderPath, zipFilePath); err != nil {
+		fmt.Printf("Failed to zip folder: %v\n", err)
 	}
 }
 
+// funsi zipFolder untuk membuat zip dari folder
+// param 1: folderPath adalah path folder yang ingin di archive
+// param 2: zipFilePath adalah path folder dan nama file hasil archive zip
+// return error jika terjadi error
 func zipFolder(folderPath, zipFilePath string) error {
+	// membuat file zip di folder hasil archive
+	fmt.Println("memulai membuat zip file...")
 	zipFile, err := os.Create(zipFilePath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create zip file: %w", err)
 	}
 	defer zipFile.Close()
 
+	// membuat zip writer untuk menulis file zip
 	zipWriter := zip.NewWriter(zipFile)
 	defer zipWriter.Close()
 
+	// membaca isi folder yanbg ingin di archive
 	files, err := os.ReadDir(folderPath)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read folder: %w", err)
 	}
 
+	// looping file di folder dan menambahkan file ke zip
 	for _, file := range files {
-		filePath := path.Join(folderPath, file.Name())
-		if err != nil {
-			return err
-		}
-		f, err := os.Open(filePath)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
+		// membuat path file yang akan di zip
+		filePath := filepath.Join(folderPath, file.Name())
 
-		w, err := zipWriter.Create(file.Name())
+		// buka file yang ingin di zip
+		file, err := os.Open(filePath)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to open file: %w", err)
 		}
-		if _, err := io.Copy(w, f); err != nil {
-			return err
+		defer file.Close()
+
+		// Buat file baru di zip archive
+		writer, err := zipWriter.Create(file.Name())
+		if err != nil {
+			return fmt.Errorf("failed to create entry in zip file: %w", err)
+		}
+
+		// copy isi file ke zip archive
+		if _, err := io.Copy(writer, file); err != nil {
+			return fmt.Errorf("failed to copy file content to zip: %w", err)
 		}
 	}
+
+	return nil
+}
+
+// addFileToZip adds a file to the provided zip.Writer
+func addFileToZip(zipWriter *zip.Writer, filePath, fileName string) error {
+	// Open the file
+	file, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	// Create a new file in the zip archive
+	writer, err := zipWriter.Create(fileName)
+	if err != nil {
+		return fmt.Errorf("failed to create entry in zip file: %w", err)
+	}
+
+	// Copy the file content to the zip archive
+	if _, err := io.Copy(writer, file); err != nil {
+		return fmt.Errorf("failed to copy file content to zip: %w", err)
+	}
+
 	return nil
 }
